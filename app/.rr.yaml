@@ -9,7 +9,7 @@ server:
   #   XDEBUG_SESSION: 1
 
 http:
-  address: "0.0.0.0:80"
+  address: "0.0.0.0:8080"
   static:
     dir: "./public"
     forbid: [".htaccess", ".php"]
