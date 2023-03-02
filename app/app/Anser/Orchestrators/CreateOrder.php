@@ -11,11 +11,46 @@ use App\Anser\Services\ProductService\Inventory;
 
 class CreateOrder extends Orchestrator
 {
-
+    /**
+     * Order service instance.
+     *
+     * @var Order
+     */
     protected $order;
+
+    /**
+     * Payment service instance.
+     *
+     * @var [type]
+     */
     protected $payment;
+
+    /**
+     * Product service instance.
+     *
+     * @var [type]
+     */
     protected $product;
+
+    /**
+     * Inventory service instance.
+     *
+     * @var [type]
+     */
+    protected $inventory;
+
+    /**
+     * Order key
+     *
+     * @var string
+     */
     public $orderKey;
+
+    /**
+     * Mock user key
+     *
+     * @var integer
+     */
     public $userKey = 1;
 
     /**
@@ -53,7 +88,7 @@ class CreateOrder extends Orchestrator
 
         $productActions = &$this->productActions;
         $this->orderKey = $orderKey =  sha1(serialize($products) . $userKey . uniqid() . $randomStr);
-        
+
         $step1 = $this->setStep();
         foreach ($products as $key => $productKey) {
             $actionName = "product{$productKey}";
@@ -74,7 +109,7 @@ class CreateOrder extends Orchestrator
             });
 
         $actionName = "product{$key}";
-            
+
         $step3 = $this->setStep();
 
         foreach ($products as $key => $productKey) {
@@ -85,10 +120,10 @@ class CreateOrder extends Orchestrator
 
             $this->productInvArr[$actionName] = $productKey;
         }
-        
+
         $this->setStep()
             ->setCompensationMethod('paymentCompensation')
-            ->addAction("createPayment", function (Orchestrator $runtimeOrch) use ($payment ,$orderKey, $userKey){
+            ->addAction("createPayment", function (Orchestrator $runtimeOrch) use ($payment, $orderKey, $userKey) {
                 $total = $runtimeOrch->getStepAction('createOrder')->getMeaningData()['total'];
                 return $payment->createPayment($orderKey, $total, $userKey);
             });
