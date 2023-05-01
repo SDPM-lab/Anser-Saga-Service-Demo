@@ -8,10 +8,8 @@ use SDPMlab\Anser\Orchestration\Saga\SimpleSaga;
 use App\Anser\Services\ProductService\Inventory;
 use SDPMlab\Anser\Service\ConcurrentAction;
 
-
 class CreateOrderSaga extends SimpleSaga
 {
-    
     /**
      * 新增訂單補償
      *
@@ -39,8 +37,15 @@ class CreateOrderSaga extends SimpleSaga
         $orderKey  = $this->getOrchestrator()->orderKey;
 
         foreach ($productInvArr as $actionName => $productKey) {
-            if($this->getOrchestrator()->getStepAction($actionName)->isSuccess()){
-                $concurrentAction->addAction($actionName, $inventory->addInventory($productKey, $orderKey, 1, 'compensate'));
+            if ($this->getOrchestrator()->getStepAction($actionName)->isSuccess()) {
+                $concurrentAction->addAction(
+                    $actionName,
+                    $inventory->addInventory(
+                        $productKey,
+                        $orderKey,
+                        1,
+                        'compensate')
+                    );
             }
         }
 

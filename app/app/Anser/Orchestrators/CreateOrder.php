@@ -8,14 +8,51 @@ use App\Anser\Services\OrderService\Order;
 use App\Anser\Services\PaymentService\Payment;
 use App\Anser\Services\ProductService\Product;
 use App\Anser\Services\ProductService\Inventory;
+use SDPMlab\Anser\Orchestration\OrchestratorInterface;
+use SDPMlab\Anser\Orchestration\Saga\Cache\CacheFactory;
 
 class CreateOrder extends Orchestrator
 {
-
+    /**
+     * Order service instance.
+     *
+     * @var Order
+     */
     protected $order;
+
+    /**
+     * Payment service instance.
+     *
+     * @var Payment
+     */
     protected $payment;
+
+    /**
+     * Product service instance.
+     *
+     * @var Product
+     */
     protected $product;
+
+    /**
+     * Inventory service instance.
+     *
+     * @var Inventory
+     */
+    protected $inventory;
+
+    /**
+     * Order key
+     *
+     * @var string
+     */
     public $orderKey;
+
+    /**
+     * Mock user key
+     *
+     * @var integer
+     */
     public $userKey = 1;
 
     /**
@@ -41,20 +78,31 @@ class CreateOrder extends Orchestrator
 
     protected function definition(array $products = [], int $userKey = 1)
     {
-        //初始化所需資訊
-        $order = $this->order;
+        CacheFactory::initCacheDriver('redis', 'tcp://anser_redis:6379');
+
+        $this->setServerName("Anser_1");
+
+        // Init the properties.
         $this->userKey = $userKey;
-        $payment = $this->payment;
-        $inventory = $this->inventory;
+        $inventory     = $this->inventory;
 
         $str = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890qwertyuiopasdfghjklzxcvbnm";
+
         str_shuffle($str);
+
         $randomStr = substr(str_shuffle($str), 0, strlen($str) - 1);
 
         $productActions = &$this->productActions;
-        $this->orderKey = $orderKey =  sha1(serialize($products) . $userKey . uniqid() . $randomStr);
-        
+
+        $this->orderKey = $orderKey =  sha1(
+            serialize($products) .
+            $userKey .
+            uniqid("", true) .
+            $randomStr
+        );
+
         $step1 = $this->setStep();
+
         foreach ($products as $key => $productKey) {
             $actionName = "product{$productKey}";
             $productActions[] = $actionName;
@@ -63,46 +111,75 @@ class CreateOrder extends Orchestrator
 
         $this->transStart(CreateOrderSaga::class);
 
-        $this->setStep()
+        $step2Clousure = static function (
+            OrchestratorInterface $runtimeOrch
+        ) use (
+            $orderKey,
+            $productActions,
+            $userKey
+        ) {
+            $products = [];
+
+            foreach ($productActions as $actionName) {
+                $products[] = $runtimeOrch->getStepAction($actionName)->getMeaningData();
+            }
+
+            return $runtimeOrch->order->createOrder($orderKey, 0, $products, $userKey);
+        };
+
+        $step2 = $this->setStep()
             ->setCompensationMethod('orderCompensation')
-            ->addAction("createOrder", function (Orchestrator $runtimeOrch) use ($order, $orderKey, $productActions, $userKey) {
-                $products = [];
-                foreach ($productActions as $actionName) {
-                    $products[] = $runtimeOrch->getStepAction($actionName)->getMeaningData();
-                }
-                return $order->createOrder($orderKey, 0, $products, $userKey);
-            });
+            ->addAction("createOrder", $step2Clousure);
 
         $actionName = "product{$key}";
-            
+
         $step3 = $this->setStep();
 
         foreach ($products as $key => $productKey) {
             $actionName = "productInv{$productKey}";
 
             $step3->setCompensationMethod('productInventoryCompensateion');
-            $step3->addAction($actionName, $inventory->reduceInventory($productKey, $orderKey, 1));
+            $step3->addAction(
+                $actionName,
+                $inventory->reduceInventory($productKey, $orderKey, 1)
+            );
 
             $this->productInvArr[$actionName] = $productKey;
         }
-        
-        $this->setStep()
+
+
+        $step4Clousre = static function (
+            OrchestratorInterface $runtimeOrch
+        ) use (
+            $orderKey,
+            $userKey
+        ) {
+            sleep(10);
+            $total = $runtimeOrch->getStepAction('createOrder')
+                                ->getMeaningData()['total'];
+
+            return $runtimeOrch->payment->createPayment($orderKey, $total, $userKey);
+        };
+
+        $step4 = $this->setStep()
             ->setCompensationMethod('paymentCompensation')
-            ->addAction("createPayment", function (Orchestrator $runtimeOrch) use ($payment ,$orderKey, $userKey){
-                $total = $runtimeOrch->getStepAction('createOrder')->getMeaningData()['total'];
-                return $payment->createPayment($orderKey, $total, $userKey);
-            });
+            ->addAction("createPayment", $step4Clousre);
 
         $this->transEnd();
     }
 
     protected function defineResult()
     {
-        if ($this->isSuccess()) {
-            $data = [
-                "orderKey" => $this->orderKey,
-            ];
-            return $data;
+        $data = [
+            "status"    => $this->isSuccess(),
+            "orderKey"  => $this->orderKey,
+        ];
+
+        if ($this->isSuccess() === false) {
+            $data["data"]["isCompensationSuccess"] = $this->isCompensationSuccess();
+            $data["data"]["failActions"] = $this->getFailActions();
         }
+
+        return $data;
     }
 }

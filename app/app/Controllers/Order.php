@@ -11,11 +11,15 @@ class Order extends BaseController
 
 	public function createOrder()
 	{
-		$jsonData = $this->request->getJSON(true);
+		$jsonData  = $this->request->getJSON(true);
+
 		$memberKey = $jsonData["memberKey"];
-		$products = $jsonData["products"];
+		$products  = $jsonData["products"];
+
 		$createOrder = new CreateOrder();
+
 		$data = $createOrder->build($products, $memberKey);
+		
 		return $this->respond($data ?? ["order_key" => $createOrder->orderKey]);
 	}
 
