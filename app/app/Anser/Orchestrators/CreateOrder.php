@@ -78,7 +78,7 @@ class CreateOrder extends Orchestrator
 
     protected function definition(array $products = [], int $userKey = 1)
     {
-        CacheFactory::initCacheDriver('redis', 'tcp://anser_redis:6379');
+        CacheFactory::initCacheDriver('redis', 'tcp://' . env("REDIS_IP") . ':' . env("REDIS_PORT"));
 
         $this->setServerName("Anser_1");
 
@@ -154,7 +154,6 @@ class CreateOrder extends Orchestrator
             $orderKey,
             $userKey
         ) {
-            sleep(10);
             $total = $runtimeOrch->getStepAction('createOrder')
                                 ->getMeaningData()['total'];
 
@@ -177,7 +176,6 @@ class CreateOrder extends Orchestrator
 
         if ($this->isSuccess() === false) {
             $data["data"]["isCompensationSuccess"] = $this->isCompensationSuccess();
-            $data["data"]["failActions"] = $this->getFailActions();
         }
 
         return $data;

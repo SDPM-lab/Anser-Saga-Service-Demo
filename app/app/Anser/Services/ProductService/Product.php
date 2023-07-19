@@ -18,7 +18,7 @@ class Product extends SimpleService
     ];
     protected $retry      = 0;
     protected $retryDelay = 0.2;
-    protected $timeout    = 10.0;
+    protected $timeout    = 6000.0;
 
     /**
      * 取得商品清單 Action
@@ -58,19 +58,19 @@ class Product extends SimpleService
             $errorResult = $e->getResponse()->getBody();
             $data = json_decode($errorResult, true);
             if ($e->isServerError()) {
-                log_message("error", $e->message);
+                log_message("error", $e->getMessage());
                 $e->getAction()->setMeaningData([]);
             }
 
             if ($e->isClientError()) {
                 $errorResult = $errorResult->getContents();
                 $data = json_decode($errorResult, true);
-                log_message("notice", $data["message"]);
+                log_message("notice", $e->getMessage());
                 $e->getAction()->setMeaningData([]);
             }
 
             if ($e->isConnectError()) {
-                log_message("critical", $e->message);
+                log_message("critical", $e->getMessage());
                 $e->getAction()->setMeaningData([]);
             }
         });
@@ -98,7 +98,7 @@ class Product extends SimpleService
                 ActionException $e
             ) {
                 if ($e->isServerError()) {
-                    log_message("error", $e->message);
+                    log_message("error", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
@@ -107,12 +107,12 @@ class Product extends SimpleService
                     $data = json_decode($errorResult, true);    
                     $errorResult = $errorResult->getContents();
                     $data = json_decode($errorResult, true);
-                    log_message("notice", $data["message"]);
+                    log_message("notice", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isConnectError()) {
-                    log_message("error", $e->message);
+                    log_message("error", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
             });
@@ -155,19 +155,19 @@ class Product extends SimpleService
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
-                    log_message("error", $e->message);
+                    log_message("error", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isClientError()) {
                     $errorResult = $errorResult->getContents();
                     $data = json_decode($errorResult, true);
-                    log_message("notice", $data["message"]);
+                    log_message("notice", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isConnectError()) {
-                    log_message("critical", $e->message);
+                    log_message("critical", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
             });
@@ -212,19 +212,19 @@ class Product extends SimpleService
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
-                    log_message("error", $e->message);
+                    log_message("error", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isClientError()) {
                     $errorResult = $e->getResponse()->getBody()->getContents();
                     $data = json_decode($errorResult, true);
-                    log_message("notice", $data["message"]);
+                    log_message("notice", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isConnectError()) {
-                    log_message("critical", $e->message);
+                    log_message("critical", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
             });
@@ -254,19 +254,19 @@ class Product extends SimpleService
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
-                    log_message("error", $e->message);
+                    log_message("error", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isClientError()) {
                     $errorResult = $errorResult->getContents();
                     $data = json_decode($errorResult, true);
-                    log_message("notice", $data["message"]);
+                    log_message("notice", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
 
                 if ($e->isConnectError()) {
-                    log_message("critical", $e->message);
+                    log_message("critical", $e->getMessage());
                     $e->getAction()->setMeaningData([]);
                 }
             });

@@ -14,7 +14,7 @@ class OrderRestarter extends BaseController
 
     public function __construct()
     {
-        CacheFactory::initCacheDriver('redis', 'tcp://anser_redis:6379');
+        CacheFactory::initCacheDriver('redis', 'tcp://10.1.1.6:6379');
     }
 
     public function restartCreateOrderOrchestratorByServerName()
