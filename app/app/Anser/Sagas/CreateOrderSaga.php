@@ -3,7 +3,7 @@
 namespace App\Anser\Sagas;
 
 use App\Anser\Services\OrderService\Order;
-use App\Anser\Services\PaymentService\Payment;
+use App\Anser\Services\PaymentService\v2\Payment;
 use App\Anser\Services\UserService\User;
 use App\Anser\Services\ShippingService\Shipping;
 use SDPMlab\Anser\Orchestration\Saga\SimpleSaga;
@@ -46,8 +46,9 @@ class CreateOrderSaga extends SimpleSaga
                         $productKey,
                         $orderKey,
                         1,
-                        'compensate')
-                    );
+                        'compensate'
+                    )
+                );
             }
         }
 
@@ -61,17 +62,15 @@ class CreateOrderSaga extends SimpleSaga
      */
     public function paymentCompensation()
     {
-        $createPaymentAction = $this->getOrchestrator()->getStepAction('createPayment');
-        $error    = $createPaymentAction->getMeaningData();
+        // $createPaymentAction = $this->getOrchestrator()->getStepAction('createPayment');
+        // $error    = $createPaymentAction->getMeaningData();
         $orderKey = $this->getOrchestrator()->orderKey;
         $userKey  = $this->getOrchestrator()->userKey;
 
         $payment = new Payment();
 
-        if ($error === 500) {
-            $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
-            $payment->deletePaymentByOrderKey($orderKey, $userKey, $total);
-        }
+        // $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
+        $payment->deletePayment($orderKey, $userKey)->do();
     }
 
     /**
@@ -81,17 +80,15 @@ class CreateOrderSaga extends SimpleSaga
      */
     public function walletCompensation()
     {
-        $chargeOrderAction = $this->getOrchestrator()->getStepAction('chargeOrder');
-        $error    = $chargeOrderAction->getMeaningData();
+        // $chargeOrderAction = $this->getOrchestrator()->getStepAction('chargeOrder');
+        // $error    = $chargeOrderAction->getMeaningData();
         $orderKey = $this->getOrchestrator()->orderKey;
         $userKey  = $this->getOrchestrator()->userKey;
 
         $user = new User();
 
-        if ($error === 500) {
-            $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
-            $user->walletCompensation($total, $userKey, $orderKey);
-        }
+        $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
+        $user->walletCompensation($total, $userKey, $orderKey)->do();
     }
 
     /**
@@ -101,15 +98,13 @@ class CreateOrderSaga extends SimpleSaga
      */
     public function shippingCompensation()
     {
-        $createShippingAction = $this->getOrchestrator()->getStepAction('createShipping');
-        $error    = $createShippingAction->getMeaningData();
+        // $createShippingAction = $this->getOrchestrator()->getStepAction('createShipping');
+        // $error    = $createShippingAction->getMeaningData();
         $orderKey = $this->getOrchestrator()->orderKey;
         $userKey  = $this->getOrchestrator()->userKey;
 
         $shipping = new Shipping();
 
-        if ($error === 500) {
-            $shipping->deleteShipping($orderKey, $userKey);
-        }
+        $shipping->deleteShipping($orderKey, $userKey)->do();
     }
 }

@@ -10,7 +10,6 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class User extends SimpleService
 {
-
     protected $serviceName = "user_service";
     protected $retry      = 0;
     protected $retryDelay = 0.2;
@@ -22,7 +21,7 @@ class User extends SimpleService
      *
      * @return ActionInterface $action
      */
-    public function userValidation(int $userKey): ActionInterface 
+    public function userValidation(int $userKey): ActionInterface
     {
         $action = $this->getAction("GET", "/api/v1/wallet");
         $action->addOption("headers", [
@@ -31,14 +30,14 @@ class User extends SimpleService
         ->doneHandler(function (
             ResponseInterface $response,
             Action $action
-        ){
+        ) {
             $resBody = $response->getBody()->getContents();
             $data    = json_decode($resBody, true);
             $action->setMeaningData($data["data"]);
         })
         ->failHandler(function (
             ActionException $e
-        ){
+        ) {
             $errorResult = $e->getResponse()->getBody();
             $data = json_decode($errorResult, true);
             if ($e->isServerError()) {
@@ -82,14 +81,14 @@ class User extends SimpleService
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
