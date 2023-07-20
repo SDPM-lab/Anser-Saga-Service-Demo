@@ -16,7 +16,7 @@ class UserAuthFilters implements FilterInterface
     public function beforeCallService(ActionInterface $action)
     {
         $options = $action->getOptions();
-        $options["X-User-key"] = random_int(1,5);
+        $options["X-User-key"] = random_int(1, 5);
         $action->setOptions($options);
     }
 

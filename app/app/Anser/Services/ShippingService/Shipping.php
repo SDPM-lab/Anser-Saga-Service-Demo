@@ -10,7 +10,6 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class Shipping extends SimpleService
 {
-
     protected $serviceName = "shipping_service";
     protected $retry      = 0;
     protected $retryDelay = 0.2;
@@ -31,14 +30,14 @@ class Shipping extends SimpleService
         ->doneHandler(function (
             ResponseInterface $response,
             Action $action
-        ){
+        ) {
             $resBody = $response->getBody()->getContents();
             $data    = json_decode($resBody, true);
             $action->setMeaningData($data["data"]);
         })
         ->failHandler(function (
             ActionException $e
-        ){
+        ) {
             $errorResult = $e->getResponse()->getBody();
             $data = json_decode($errorResult, true);
             if ($e->isServerError()) {
@@ -70,16 +69,16 @@ class Shipping extends SimpleService
      */
     public function getShipping(string $orderKey, int $userKey): ActionInterface
     {
-        $action = $this->getAction("GET","/api/v1/shipping/{$orderKey}")
+        $action = $this->getAction("GET", "/api/v1/shipping/{$orderKey}")
             ->addOption("headers", [
                 "X-User-key" => $userKey
             ])
-            ->doneHandler(function(
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
@@ -119,7 +118,7 @@ class Shipping extends SimpleService
         int $userKey
     ): ActionInterface {
         $action = $this->getAction("POST", "/api/v1/shipping")
-            ->addOption("json",[
+            ->addOption("json", [
                 "o_key"      => $orderKey
             ])
             ->addOption("headers", [
@@ -128,14 +127,14 @@ class Shipping extends SimpleService
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -180,14 +179,14 @@ class Shipping extends SimpleService
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -218,16 +217,16 @@ class Shipping extends SimpleService
      */
     public function deleteShipping(string $orderKey, int $userKey): ActionInterface
     {
-        $action = $this->getAction("DELETE","/api/v1/shipping/{$orderKey}")
+        $action = $this->getAction("DELETE", "/api/v1/shipping/{$orderKey}")
             ->addOption("headers", [
                 "X-User-key" => $userKey
             ])
-            ->doneHandler(function(
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (

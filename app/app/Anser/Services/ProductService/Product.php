@@ -10,7 +10,6 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class Product extends SimpleService
 {
-
     protected $serviceName = "product_service";
     protected $filters = [
         "before" => [],
@@ -32,29 +31,39 @@ class Product extends SimpleService
     public function getProductList(
         ?int $limit,
         ?int $offset,
-        ?string $search, 
+        ?string $search,
         ?string $isDesc
     ): ActionInterface {
         $payload = [];
 
-        if (!is_null($limit))     $payload["limit"]  = $limit;
-        if (!is_null($offset))    $payload["offset"] = $offset;
-        if (!is_null($search))    $payload["search"] = $search;
-        if (!is_null($isDesc))    $payload["isDesc"] = $isDesc;
+        if (!is_null($limit)) {
+            $payload["limit"]  = $limit;
+        }
+        if (!is_null($offset)) {
+            $payload["offset"] = $offset;
+        }
+        if (!is_null($search)) {
+            $payload["search"] = $search;
+        }
+        if (!is_null($isDesc)) {
+            $payload["isDesc"] = $isDesc;
+        }
 
         $action = $this->getAction("GET", "/api/v1/products");
-        if(!empty($payload)) $action->addOption("query", $payload);
+        if(!empty($payload)) {
+            $action->addOption("query", $payload);
+        }
         $action->doneHandler(function (
             ResponseInterface $response,
             Action $action
-        ){
+        ) {
             $resBody = $response->getBody()->getContents();
             $data    = json_decode($resBody, true);
             $action->setMeaningData($data["data"]);
         })
         ->failHandler(function (
             ActionException $e
-        ){
+        ) {
             $errorResult = $e->getResponse()->getBody();
             $data = json_decode($errorResult, true);
             if ($e->isServerError()) {
@@ -85,13 +94,13 @@ class Product extends SimpleService
      */
     public function getProduct(int $productKey): ActionInterface
     {
-        $action = $this->getAction("GET","/api/v1/products/{$productKey}")
-            ->doneHandler(function(
+        $action = $this->getAction("GET", "/api/v1/products/{$productKey}")
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
@@ -104,7 +113,7 @@ class Product extends SimpleService
 
                 if ($e->isClientError()) {
                     $errorResult = $e->getResponse()->getBody();
-                    $data = json_decode($errorResult, true);    
+                    $data = json_decode($errorResult, true);
                     $errorResult = $errorResult->getContents();
                     $data = json_decode($errorResult, true);
                     log_message("notice", $e->getMessage());
@@ -135,7 +144,7 @@ class Product extends SimpleService
         int $amount
     ): ActionInterface {
         $action = $this->getAction("POST", "/api/v1/products")
-            ->addOption("form_params",[
+            ->addOption("form_params", [
                 "name"        => $name,
                 "description" => $description,
                 "price"       => $price,
@@ -144,14 +153,14 @@ class Product extends SimpleService
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -180,7 +189,7 @@ class Product extends SimpleService
      * @param string|null $name
      * @param string|null $description
      * @param integer|null $price
-     * @param integer|null $amount     
+     * @param integer|null $amount
      * @return ActionInterface $action
      */
     public function updateProduct(
@@ -191,24 +200,32 @@ class Product extends SimpleService
     ): ActionInterface {
         $payload = [];
 
-        if (!is_null($name))        $payload["name"] = $name;
-        if (!is_null($description)) $payload["description"] = $description;
-        if (!is_null($price))       $payload["price"] = $price;
-        if (!is_null($amount))      $payload["amount"] = $amount;
+        if (!is_null($name)) {
+            $payload["name"] = $name;
+        }
+        if (!is_null($description)) {
+            $payload["description"] = $description;
+        }
+        if (!is_null($price)) {
+            $payload["price"] = $price;
+        }
+        if (!is_null($amount)) {
+            $payload["amount"] = $amount;
+        }
 
         $action = $this->getAction("PUT", "/api/v1/products")
             ->addOption("json", $payload)
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -239,13 +256,13 @@ class Product extends SimpleService
      */
     public function deleteProduct(int $productKey): ActionInterface
     {
-        $action = $this->getAction("DELETE","/api/v1/products/{$productKey}")
-            ->doneHandler(function(
+        $action = $this->getAction("DELETE", "/api/v1/products/{$productKey}")
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (

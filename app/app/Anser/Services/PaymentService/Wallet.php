@@ -10,7 +10,6 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class Wallet extends SimpleService
 {
-
     protected $serviceName = "payment_service";
     protected $retry      = 0;
     protected $retryDelay = 0.2;
@@ -27,12 +26,12 @@ class Wallet extends SimpleService
             ->addOption("headers", [
                 "X-User-key" => $userKey
             ])
-            ->doneHandler(function(
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
@@ -59,7 +58,7 @@ class Wallet extends SimpleService
             });
         return $action;
     }
-    
+
     /**
      * 取得使用者錢包儲值 Action
      *
@@ -68,43 +67,43 @@ class Wallet extends SimpleService
      */
     public function storeToWallet(int $addAmount): ActionInterface
     {
-         $action = $this->getAction("POST", "/api/v1/wallet")
-            ->addOption("headers", [
-                "X-User-key" => 1
-            ])
-            ->addOption("form_params",[
-                "addAmount" => $addAmount
-            ])
-            ->doneHandler(function (
-                ResponseInterface $response,
-                Action $action
-            ){
-                $resBody = $response->getBody()->getContents();
-                $data    = json_decode($resBody, true);
-                $action->setMeaningData($data["data"]);
-            })
-            ->failHandler(function (
-                ActionException $e
-            ){
-                $errorResult = $e->getResponse()->getBody();
-                $data = json_decode($errorResult, true);
-                if ($e->isServerError()) {
-                    log_message("error", $e->getMessage());
-                    $e->getAction()->setMeaningData([]);
-                }
+        $action = $this->getAction("POST", "/api/v1/wallet")
+           ->addOption("headers", [
+               "X-User-key" => 1
+           ])
+           ->addOption("form_params", [
+               "addAmount" => $addAmount
+           ])
+           ->doneHandler(function (
+               ResponseInterface $response,
+               Action $action
+           ) {
+               $resBody = $response->getBody()->getContents();
+               $data    = json_decode($resBody, true);
+               $action->setMeaningData($data["data"]);
+           })
+           ->failHandler(function (
+               ActionException $e
+           ) {
+               $errorResult = $e->getResponse()->getBody();
+               $data = json_decode($errorResult, true);
+               if ($e->isServerError()) {
+                   log_message("error", $e->getMessage());
+                   $e->getAction()->setMeaningData([]);
+               }
 
-                if ($e->isClientError()) {
-                    $errorResult = $errorResult->getContents();
-                    $data = json_decode($errorResult, true);
-                    log_message("notice", $e->getMessage());
-                    $e->getAction()->setMeaningData([]);
-                }
+               if ($e->isClientError()) {
+                   $errorResult = $errorResult->getContents();
+                   $data = json_decode($errorResult, true);
+                   log_message("notice", $e->getMessage());
+                   $e->getAction()->setMeaningData([]);
+               }
 
-                if ($e->isConnectError()) {
-                    log_message("critical", $e->getMessage());
-                    $e->getAction()->setMeaningData([]);
-                }
-            });
+               if ($e->isConnectError()) {
+                   log_message("critical", $e->getMessage());
+                   $e->getAction()->setMeaningData([]);
+               }
+           });
         return $action;
     }
 
@@ -120,20 +119,20 @@ class Wallet extends SimpleService
             ->addOption("headers", [
                 "X-User-key" => 1
             ])
-            ->addOption("form_params",[
+            ->addOption("form_params", [
                 "addAmount" => $addAmount
             ])
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {

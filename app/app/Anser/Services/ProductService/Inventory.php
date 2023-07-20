@@ -10,9 +10,8 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class Inventory extends SimpleService
 {
-
     protected $serviceName = "product_service";
-    
+
     protected $retry      = 0;
     protected $retryDelay = 0.2;
     protected $timeout    = 6000.0;
@@ -41,18 +40,18 @@ class Inventory extends SimpleService
         ];
 
         $action = $this->getAction("POST", "/api/v1/inventory/addInventory")
-            ->addOption("form_params",$payload)
+            ->addOption("form_params", $payload)
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -96,18 +95,18 @@ class Inventory extends SimpleService
         ];
 
         $action = $this->getAction("POST", "/api/v1/inventory/reduceInventory")
-            ->addOption("form_params",$payload)
+            ->addOption("form_params", $payload)
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -138,13 +137,13 @@ class Inventory extends SimpleService
      */
     public function deleteInventory(int $productKey): ActionInterface
     {
-        $action = $this->getAction("DELETE","/api/v1/inventory/{$productKey}")
-            ->doneHandler(function(
+        $action = $this->getAction("DELETE", "/api/v1/inventory/{$productKey}")
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
@@ -171,5 +170,5 @@ class Inventory extends SimpleService
             });
         return $action;
     }
-    
+
 }

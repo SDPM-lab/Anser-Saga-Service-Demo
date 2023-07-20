@@ -11,7 +11,6 @@ use SDPMlab\Anser\Service\ActionInterface;
 
 class Payment extends SimpleService
 {
-
     protected $serviceName = "payment_service";
     protected $retry      = 0;
     protected $retryDelay = 0.2;
@@ -39,17 +38,25 @@ class Payment extends SimpleService
         if (!is_null($limit)) {
             $payload["limit"] = $limit;
         }
-        
-        if (!is_null($offset))    $payload["offset"] = $offset;
-        if (!is_null($search))    $payload["search"] = $search;
-        if (!is_null($isDesc))    $payload["isDesc"] = $isDesc;
+
+        if (!is_null($offset)) {
+            $payload["offset"] = $offset;
+        }
+        if (!is_null($search)) {
+            $payload["search"] = $search;
+        }
+        if (!is_null($isDesc)) {
+            $payload["isDesc"] = $isDesc;
+        }
 
         $action = $this->getAction("GET", "/api/v2/payments");
-        if(!empty($payload)) $action->addOption("query", $payload);
+        if(!empty($payload)) {
+            $action->addOption("query", $payload);
+        }
         $action->doneHandler(function (
             ResponseInterface $response,
             Action $action
-        ){
+        ) {
             $resBody = $response->getBody()->getContents();
             $data    = json_decode($resBody, true);
             $action->setMeaningData($data["data"]);
@@ -59,7 +66,7 @@ class Payment extends SimpleService
         ])
         ->failHandler(function (
             ActionException $e
-        ){
+        ) {
             $errorResult = $e->getResponse()->getBody();
             $data = json_decode($errorResult, true);
             if ($e->isServerError()) {
@@ -90,16 +97,16 @@ class Payment extends SimpleService
      */
     public function getPayment(int $paymentKey): ActionInterface
     {
-        $action = $this->getAction("GET","/api/v2/payments/{$paymentKey}")
+        $action = $this->getAction("GET", "/api/v2/payments/{$paymentKey}")
             ->addOption("headers", [
                 "X-User-key" => 1
             ])
-            ->doneHandler(function(
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
+                $data = json_decode($resBody, true);
                 $action->setMeaningData($data["data"]);
             })
             ->failHandler(function (
@@ -134,10 +141,10 @@ class Payment extends SimpleService
      * @param integer $total
      * @return ActionInterface $action
      */
-    public function createPayment(string $orderKey,int $total, int $userKey): ActionInterface
+    public function createPayment(string $orderKey, int $total, int $userKey): ActionInterface
     {
         $action = $this->getAction("POST", "/api/v2/payments")
-            ->addOption("form_params",[
+            ->addOption("form_params", [
                 "o_key" => $orderKey,
                 "total" => $total,
             ])
@@ -147,14 +154,14 @@ class Payment extends SimpleService
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
                 $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 if ($e->isClientError()) {
                     $errorResult = $e->getResponse()->getBody()->getContents();
                     $data = json_decode($errorResult, true);
@@ -187,21 +194,21 @@ class Payment extends SimpleService
             ->addOption("headers", [
                 "X-User-key" => 1
             ])
-            ->addOption("json",[
+            ->addOption("json", [
                 "p_key" => $paymentKey,
                 "total" => $total
             ])
             ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
                 $data    = json_decode($resBody, true);
-                $action->setMeaningData($data["data"]);
+                $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
-            ){
+            ) {
                 $errorResult = $e->getResponse()->getBody();
                 $data = json_decode($errorResult, true);
                 if ($e->isServerError()) {
@@ -227,22 +234,23 @@ class Payment extends SimpleService
     /**
      * 取得刪除付款 Action
      *
-     * @param integer $paymentKey
+     * @param string $orderKey
+     * @param integer $userKey
      * @return ActionInterface
      */
-    public function deletePayment(int $paymentKey): ActionInterface
+    public function deletePayment(string $orderKey, int $userKey): ActionInterface
     {
-        $action = $this->getAction("DELETE","/api/v2/payments/{$paymentKey}")
+        $action = $this->getAction("DELETE", "/api/v2/payments/{$orderKey}")
             ->addOption("headers", [
-                "X-User-key" => 1
+                "X-User-key" => $userKey
             ])
-            ->doneHandler(function(
+            ->doneHandler(function (
                 ResponseInterface $response,
                 Action $action
-            ){
+            ) {
                 $resBody = $response->getBody()->getContents();
-                $data = json_decode($resBody,true);
-                $action->setMeaningData($data["data"]);
+                $data = json_decode($resBody, true);
+                $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
@@ -272,12 +280,12 @@ class Payment extends SimpleService
     /**
      * 透過訂單主鍵刪除訂單付款
      *
-     * @param integer $orderKey
+     * @param string $orderKey
      * @param integer $userKey
      * @param integer $total
      * @return ActionInterface
      */
-    public function deletePaymentByOrderKey(int $orderKey, int $userKey, int $total): ActionInterface
+    public function deletePaymentByOrderKey(string $orderKey, int $userKey, int $total): ActionInterface
     {
         $action = $this->getAction("POST", "/api/vDtm/payments/createOrderCompensate")
             ->addOption("json", [

@@ -152,7 +152,43 @@ class ComplexCreateOrder extends Orchestrator
             ->setCompensationMethod('orderCompensation')
             ->addAction("createOrder", $step3Closure);
 
-        $step4Closure = static function (
+        $step4Clousre = static function (
+            OrchestratorInterface $runtimeOrch
+        ) use (
+            $orderKey,
+            $userKey
+        ) {
+            $total = $runtimeOrch->getStepAction('createOrder')
+                ->getMeaningData()['total'];
+
+            return $runtimeOrch->payment->createPayment($orderKey, $total, $userKey);
+        };
+
+        $step4 = $this->setStep()
+            ->setCompensationMethod('paymentCompensation')
+            ->addAction("createPayment", $step4Clousre);
+
+        $step5 = $this->setStep()
+            ->setCompensationMethod('shippingCompensation')
+            ->addAction("createShipping", $this->shipping->createShipping($orderKey, $userKey));
+
+        $actionName = "product{$key}";
+
+        $step6 = $this->setStep();
+
+        foreach ($products as $key => $productKey) {
+            $actionName = "productInv{$productKey}";
+
+            $step6->setCompensationMethod('productInventoryCompensateion');
+            $step6->addAction(
+                $actionName,
+                $inventory->reduceInventory($productKey, $orderKey, 1)
+            );
+
+            $this->productInvArr[$actionName] = $productKey;
+        }
+
+        $step7Closure = static function (
             OrchestratorInterface $runtimeOrch
         ) use (
             $orderKey,
@@ -164,46 +200,9 @@ class ComplexCreateOrder extends Orchestrator
             return $runtimeOrch->user->chargeOrder($orderKey, $total, $userKey);
         };
 
-        $step4 = $this->setStep()
-            ->setCompensationMethod('walletCompensation')
-            ->addAction("chargeOrder", $step4Closure);
-
-        $actionName = "product{$key}";
-
-        $step5 = $this->setStep();
-
-        foreach ($products as $key => $productKey) {
-            $actionName = "productInv{$productKey}";
-
-            $step5->setCompensationMethod('productInventoryCompensateion');
-            $step5->addAction(
-                $actionName,
-                $inventory->reduceInventory($productKey, $orderKey, 1)
-            );
-
-            $this->productInvArr[$actionName] = $productKey;
-        }
-
-
-        $step6Clousre = static function (
-            OrchestratorInterface $runtimeOrch
-        ) use (
-            $orderKey,
-            $userKey
-        ) {
-            $total = $runtimeOrch->getStepAction('createOrder')
-                                ->getMeaningData()['total'];
-
-            return $runtimeOrch->payment->createPayment($orderKey, $total, $userKey);
-        };
-
-        $step6 = $this->setStep()
-            ->setCompensationMethod('paymentCompensation')
-            ->addAction("createPayment", $step6Clousre);
-
         $step7 = $this->setStep()
-            ->setCompensationMethod('shippingCompensation')
-            ->addAction("createShipping", $this->shipping->createShipping($orderKey, $userKey));
+            ->setCompensationMethod('walletCompensation')
+            ->addAction("chargeOrder", $step7Closure);
 
         $this->transEnd();
     }
@@ -216,7 +215,8 @@ class ComplexCreateOrder extends Orchestrator
         ];
 
         if ($this->isSuccess() === false) {
-            $data["data"]["isCompensationSuccess"] = $this->isCompensationSuccess();
+            $data["fail"]["isCompensationSuccess"] = $this->isCompensationSuccess();
+            $data["fail"]["FailAction"] = $this->getFailActions();
         }
 
         return $data;
