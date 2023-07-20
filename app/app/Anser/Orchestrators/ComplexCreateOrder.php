@@ -5,13 +5,15 @@ namespace App\Anser\Orchestrators;
 use SDPMlab\Anser\Orchestration\Orchestrator;
 use App\Anser\Sagas\CreateOrderSaga;
 use App\Anser\Services\OrderService\Order;
-use App\Anser\Services\PaymentService\Payment;
+use App\Anser\Services\UserService\User;
+use App\Anser\Services\ShippingService\Shipping;
+use App\Anser\Services\PaymentService\V2\Payment;
 use App\Anser\Services\ProductService\Product;
 use App\Anser\Services\ProductService\Inventory;
 use SDPMlab\Anser\Orchestration\OrchestratorInterface;
 use SDPMlab\Anser\Orchestration\Saga\Cache\CacheFactory;
 
-class CreateOrder extends Orchestrator
+class ComplexCreateOrder extends Orchestrator
 {
     /**
      * Order service instance.
@@ -40,6 +42,20 @@ class CreateOrder extends Orchestrator
      * @var Inventory
      */
     protected $inventory;
+
+    /**
+     * User service instance.
+     *
+     * @var User
+     */
+    protected $user;
+
+    /**
+     * Shipping service instance.
+     *
+     * @var Shipping
+     */
+    protected $shipping;
 
     /**
      * Order key
@@ -73,6 +89,8 @@ class CreateOrder extends Orchestrator
         $this->order   = new Order();
         $this->payment = new Payment();
         $this->product = new Product();
+        $this->user    = new User();
+        $this->shipping  = new Shipping();
         $this->inventory = new Inventory();
     }
 
@@ -109,9 +127,12 @@ class CreateOrder extends Orchestrator
             $step1->addAction($actionName, $this->product->getProduct($productKey));
         }
 
+        $step2 = $this->setStep()
+            ->addAction("userValidation", $this->user->userValidation($userKey));
+
         $this->transStart(CreateOrderSaga::class);
 
-        $step2Clousure = static function (
+        $step3Closure = static function (
             OrchestratorInterface $runtimeOrch
         ) use (
             $orderKey,
@@ -127,19 +148,35 @@ class CreateOrder extends Orchestrator
             return $runtimeOrch->order->createOrder($orderKey, 0, $products, $userKey);
         };
 
-        $step2 = $this->setStep()
+        $step3 = $this->setStep()
             ->setCompensationMethod('orderCompensation')
-            ->addAction("createOrder", $step2Clousure);
+            ->addAction("createOrder", $step3Closure);
+
+        $step4Closure = static function (
+            OrchestratorInterface $runtimeOrch
+        ) use (
+            $orderKey,
+            $userKey
+        ) {
+            $total = $runtimeOrch->getStepAction('createOrder')
+                                ->getMeaningData()['total'];
+
+            return $runtimeOrch->user->chargeOrder($orderKey, $total, $userKey);
+        };
+
+        $step4 = $this->setStep()
+            ->setCompensationMethod('walletCompensation')
+            ->addAction("chargeOrder", $step4Closure);
 
         $actionName = "product{$key}";
 
-        $step3 = $this->setStep();
+        $step5 = $this->setStep();
 
         foreach ($products as $key => $productKey) {
             $actionName = "productInv{$productKey}";
 
-            $step3->setCompensationMethod('productInventoryCompensateion');
-            $step3->addAction(
+            $step5->setCompensationMethod('productInventoryCompensateion');
+            $step5->addAction(
                 $actionName,
                 $inventory->reduceInventory($productKey, $orderKey, 1)
             );
@@ -148,7 +185,7 @@ class CreateOrder extends Orchestrator
         }
 
 
-        $step4Clousre = static function (
+        $step6Clousre = static function (
             OrchestratorInterface $runtimeOrch
         ) use (
             $orderKey,
@@ -160,9 +197,13 @@ class CreateOrder extends Orchestrator
             return $runtimeOrch->payment->createPayment($orderKey, $total, $userKey);
         };
 
-        $step4 = $this->setStep()
+        $step6 = $this->setStep()
             ->setCompensationMethod('paymentCompensation')
-            ->addAction("createPayment", $step4Clousre);
+            ->addAction("createPayment", $step6Clousre);
+
+        $step7 = $this->setStep()
+            ->setCompensationMethod('shippingCompensation')
+            ->addAction("createShipping", $this->shipping->createShipping($orderKey, $userKey));
 
         $this->transEnd();
     }
@@ -171,7 +212,7 @@ class CreateOrder extends Orchestrator
     {
         $data = [
             "status"    => $this->isSuccess(),
-            "orderKey"  => $this->orderKey,
+            "orderKey"  => $this->orderKey
         ];
 
         if ($this->isSuccess() === false) {
