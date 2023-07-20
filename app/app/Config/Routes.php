@@ -35,6 +35,7 @@ $routes->setAutoRoute(false);
 $routes->get('/', 'Home::index');
 
 $routes->get('createOrder', 'Order::createOrder');
+$routes->get('complexCreateOrder', 'Order::complexCreateOrder');
 
 $routes->get(
 	'restartCreateOrderOrchestratorByServerName',
