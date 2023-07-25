@@ -3,7 +3,7 @@
 namespace App\Anser\Sagas;
 
 use App\Anser\Services\OrderService\Order;
-use App\Anser\Services\PaymentService\v2\Payment;
+use App\Anser\Services\PaymentService\Payment;
 use App\Anser\Services\UserService\User;
 use App\Anser\Services\ShippingService\Shipping;
 use SDPMlab\Anser\Orchestration\Saga\SimpleSaga;
@@ -62,15 +62,13 @@ class CreateOrderSaga extends SimpleSaga
      */
     public function paymentCompensation()
     {
-        // $createPaymentAction = $this->getOrchestrator()->getStepAction('createPayment');
-        // $error    = $createPaymentAction->getMeaningData();
         $orderKey = $this->getOrchestrator()->orderKey;
         $userKey  = $this->getOrchestrator()->userKey;
 
         $payment = new Payment();
 
-        // $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
-        $payment->deletePayment($orderKey, $userKey)->do();
+        $total = $this->getOrchestrator()->getStepAction('createOrder')->getMeaningData()['total'];
+        $payment->deletePaymentByOrderKey($orderKey, $userKey, $total)->do();
     }
 
     /**

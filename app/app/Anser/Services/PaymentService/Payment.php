@@ -297,7 +297,7 @@ class Payment extends SimpleService
             ) {
                 $resBody = $response->getBody()->getContents();
                 $data = json_decode($resBody, true);
-                $action->setMeaningData($data["data"]);
+                $action->setMeaningData($data);
             })
             ->failHandler(function (
                 ActionException $e
